@@ -19,13 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.fordfrog.xml2csv;
+package com.github.peter277.xml2table;
 
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Assert;
-import org.junit.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 public class ColumnFinderTest {
 
@@ -33,7 +34,7 @@ public class ColumnFinderTest {
     public void test() {
         final InputStream inputStream = this.getClass().getResourceAsStream(
                 "/input-columns.xml");
-        Assert.assertNotNull(inputStream);
+        assertNotNull(inputStream);
 
         final List<String> expected = Arrays.asList(
                 new String[]{"item1/item2/value1", "value2", "value3", "value4"});
@@ -41,6 +42,6 @@ public class ColumnFinderTest {
         final List<String> columns = ColumnFinder.find(inputStream,
                 "/root/item/");
 
-        Assert.assertEquals(expected, columns);
+        assertEquals(expected, columns);
     }
 }

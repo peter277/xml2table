@@ -19,32 +19,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.fordfrog.xml2csv;
+package com.github.peter277.xml2table;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
 /**
- * Filter class.
+ * Remapping information.
  *
  * @author fordfrog
  */
-public class Filter {
+public class Remapping {
 
     /**
-     * Name of the column to filter.
+     * Column name.
      */
     private String column;
     /**
-     * Filter values.
+     * Map of original values and new values.
      */
-    private Collection<String> values;
-    /**
-     * If true then items with specified values are excluded, if true then only
-     * items with specified values are included.
-     */
-    private boolean exclude;
+    private Map<String, String> map;
 
     /**
      * Getter for {@link #column}.
@@ -56,7 +50,7 @@ public class Filter {
     }
 
     /**
-     * Setter for {@link #column},
+     * Setter {@link #column}.
      *
      * @param column {@link #column}
      */
@@ -65,63 +59,41 @@ public class Filter {
     }
 
     /**
-     * Getter for {@link #values}.
+     * Getter for {@link #map}.
      *
-     * @return {@link #values}
+     * @return {@link #map}
      */
-    public Collection<String> getValues() {
-        return Collections.unmodifiableCollection(values);
+    public Map<String, String> getMap() {
+        return Collections.unmodifiableMap(map);
     }
 
     /**
-     * Setter for {@link #values}.
+     * Setter for {@link #map}.
      *
-     * @param values {@link #values}
+     * @param map {@link #map}
      */
     @SuppressWarnings("AssignmentToCollectionOrArrayFieldFromParameter")
-    public void setValues(final Collection<String> values) {
-        this.values = values;
+    public void setMap(final Map<String, String> map) {
+        this.map = map;
     }
 
     /**
-     * Getter for {@link #exclude}.
+     * Replaces values in {@link #column} with values from {@link #map} if
+     * current value is present in {@link #map} as key.
      *
-     * @return {@link #exclude}
+     * @param itemValues item values
      */
-    public boolean isExclude() {
-        return exclude;
-    }
-
-    /**
-     * Setter for {@link #exclude}.
-     *
-     * @param exclude {@link #exclude}
-     */
-    public void setExclude(final boolean exclude) {
-        this.exclude = exclude;
-    }
-
-    /**
-     * Checks whether the item matches the filter.
-     *
-     * @param itemValues map of item columns and corresponding values
-     *
-     * @return true if item matches filter and should be included, false if item
-     *         does not match filter and should be excluded
-     */
-    public boolean matchesFilter(final Map<String, String> itemValues) {
-        if (values == null) {
-            return exclude;
-        }
-
+    public void replaceValues(final Map<String, String> itemValues) {
         final String itemValue = itemValues.get(column);
 
         if (itemValue == null) {
-            return exclude;
-        } else if (values.contains(itemValue)) {
-            return !exclude;
-        } else {
-            return exclude;
+            return;
+        }
+
+        final String newValue = map.get(itemValue);
+
+        if (newValue != null) {
+            itemValues.put(column, newValue);
         }
     }
 }

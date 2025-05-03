@@ -1,10 +1,10 @@
-# xml2csv
+# xml2table
 
-Simple XML to CSV conversion utility.
+Simple XML to flat file (e.g. CSV, TSV) conversion utility.
 
 ## What it does exactly?
 
-It converts any XML file to CSV:
+It converts any XML file to flat file format:
 
     <root>
         <item>
@@ -28,27 +28,24 @@ It converts any XML file to CSV:
     </root>
 
 Choose any XML element using XPath expression in order to select XML elements
-for conversion to CSV file. Only child elements that match the expression will
+for conversion to flat file. Only child elements that match the expression will
 be converted.
 
 ## Prerequisities
 
-* JRE or JDK 7+
-* Apache Maven 3+ (just in case you want to compile the application yourself)
+* JRE or JDK 11+
+* Apache Maven 3+ (to compile the application yourself)
 
 ## Compilation
 
-You are not required to compile the application yourself, you can download
-latest binary from https://github.com/fordfrog/xml2csv/downloads. Anyway,
-compilation of xml2csv is easy. Once you install Apache Maven, you just need
-to run `mvn package` in the root directory of the sources, where pom.xml file is
+Run `mvn package` in the root directory of the sources, where pom.xml file is
 located.
 
 ## Running
 
-Here is the usage information that xml2csv outputs if run without parameters:
+Here is the usage information that xml2table outputs if run without parameters:
 
-    Usage: java -jar xml2csv-*.jar --columns <columns> --input <file> --output <file> --item-name <xpath>
+    Usage: xml2table --columns <columns> --input <file> --output <file> --item-name <xpath>
 
     General command line switches:
 
@@ -106,36 +103,15 @@ Characters encoding:
 
     Application expects all files being in UTF-8 encoding.
 
-## To do
+## License and Acknowledgements
 
-Nothing at this moment.
+xml2table is distributed under the MIT License.
 
-## License
+This project was initially based on [xml2csv](https://github.com/fordfrog/xml2csv),
+created by Miroslav Šulc and released under the MIT License.
 
-xml2csv is distributed under MIT license.
+## Change Log
 
-## Changelog
+### Version 0.1.0
 
-### Version 1.2.2
-
-* Fixed removal of new lines from the strings.
-
-### Version 1.2.1
-
-* Updated plugin and dependency versions.
-
-### Version 1.2.0
-
-* Added support for trimming values.
-* Added support for custom separator.
-* Added support for joining values of repeated XML elements.
-* Added support for handling any XML document.
-
-### Version 1.1.0
-
-* Added support for filtering rows.
-* Added support for remapping (replacing) values.
-
-### Version 1.0.0
-
-Initial release.
+May 2025. Initial release, forked from [xml2csv](https://github.com/fordfrog/xml2csv).

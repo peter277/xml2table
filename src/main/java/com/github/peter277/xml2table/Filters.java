@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.fordfrog.xml2csv;
+package com.github.peter277.xml2table;
 
 import java.util.ArrayList;
 import java.util.Collection;

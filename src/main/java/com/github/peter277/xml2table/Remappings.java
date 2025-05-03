@@ -19,81 +19,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.fordfrog.xml2csv;
+package com.github.peter277.xml2table;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 
 /**
- * Remapping information.
+ * Remappings handler.
  *
  * @author fordfrog
  */
-public class Remapping {
+public class Remappings {
 
     /**
-     * Column name.
+     * Collection of remappings.
      */
-    private String column;
-    /**
-     * Map of original values and new values.
-     */
-    private Map<String, String> map;
+    private final Collection<Remapping> remappings = new ArrayList<>(10);
 
     /**
-     * Getter for {@link #column}.
+     * Adds remapping to the collection of remappings.
      *
-     * @return {@link #column}
+     * @param remapping remapping
      */
-    public String getColumn() {
-        return column;
+    public void addRemapping(final Remapping remapping) {
+        remappings.add(remapping);
     }
 
     /**
-     * Setter {@link #column}.
-     *
-     * @param column {@link #column}
-     */
-    public void setColumn(final String column) {
-        this.column = column;
-    }
-
-    /**
-     * Getter for {@link #map}.
-     *
-     * @return {@link #map}
-     */
-    public Map<String, String> getMap() {
-        return Collections.unmodifiableMap(map);
-    }
-
-    /**
-     * Setter for {@link #map}.
-     *
-     * @param map {@link #map}
-     */
-    @SuppressWarnings("AssignmentToCollectionOrArrayFieldFromParameter")
-    public void setMap(final Map<String, String> map) {
-        this.map = map;
-    }
-
-    /**
-     * Replaces values in {@link #column} with values from {@link #map} if
-     * current value is present in {@link #map} as key.
+     * Replaces values in item using all specified remappings.
      *
      * @param itemValues item values
      */
     public void replaceValues(final Map<String, String> itemValues) {
-        final String itemValue = itemValues.get(column);
-
-        if (itemValue == null) {
-            return;
-        }
-
-        final String newValue = map.get(itemValue);
-
-        if (newValue != null) {
-            itemValues.put(column, newValue);
+        for (final Remapping remapping : remappings) {
+            remapping.replaceValues(itemValues);
         }
     }
 }

@@ -19,10 +19,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.fordfrog.xml2csv;
+package com.github.peter277.xml2table;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test class for {@link CsvUtils}.
@@ -33,27 +33,27 @@ public class CsvUtilsTest {
 
     @Test
     public void tests() {
-        Assert.assertArrayEquals(new String[]{"test", "test"},
+        assertArrayEquals(new String[]{"test", "test"},
                 CsvUtils.parseValues("test,test"));
-        Assert.assertArrayEquals(new String[]{"test", "test"},
+        assertArrayEquals(new String[]{"test", "test"},
                 CsvUtils.parseValues("\"test\",test"));
-        Assert.assertArrayEquals(new String[]{"test", "test"},
+        assertArrayEquals(new String[]{"test", "test"},
                 CsvUtils.parseValues("\"test\",\"test\""));
-        Assert.assertArrayEquals(new String[]{"test", "test"},
+        assertArrayEquals(new String[]{"test", "test"},
                 CsvUtils.parseValues("'test',test"));
-        Assert.assertArrayEquals(new String[]{"test", "test"},
+        assertArrayEquals(new String[]{"test", "test"},
                 CsvUtils.parseValues("'test','test'"));
-        Assert.assertArrayEquals(new String[]{"test \"", "test"},
+        assertArrayEquals(new String[]{"test \"", "test"},
                 CsvUtils.parseValues("\"test \"\"\",test"));
-        Assert.assertArrayEquals(new String[]{"test '", "test"},
+        assertArrayEquals(new String[]{"test '", "test"},
                 CsvUtils.parseValues("\"test '\",test"));
-        Assert.assertArrayEquals(new String[]{"test \"", "test"},
+        assertArrayEquals(new String[]{"test \"", "test"},
                 CsvUtils.parseValues("\"test \\\"\",test"));
-        Assert.assertArrayEquals(new String[]{"test '", "test"},
+        assertArrayEquals(new String[]{"test '", "test"},
                 CsvUtils.parseValues("'test ''',test"));
-        Assert.assertArrayEquals(new String[]{"test \"", "test"},
+        assertArrayEquals(new String[]{"test \"", "test"},
                 CsvUtils.parseValues("'test \"',test"));
-        Assert.assertArrayEquals(new String[]{"test '", "test"},
+        assertArrayEquals(new String[]{"test '", "test"},
                 CsvUtils.parseValues("'test \\'',test"));
     }
 }

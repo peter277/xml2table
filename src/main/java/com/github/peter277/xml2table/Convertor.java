@@ -19,12 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.fordfrog.xml2csv;
+package com.github.peter277.xml2table;
 
+import com.ctc.wstx.stax.WstxInputFactory;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -62,9 +64,9 @@ public class Convertor {
             final String[] columns, final Filters filters,
             final Remappings remappings, final char separator,
             final boolean trim, final boolean join, final String itemName) {
-        try (final InputStream inputStream = Files.newInputStream(inputFile);
+        try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(inputFile));
                 final Writer writer = Files.newBufferedWriter(
-                        outputFile, Charset.forName("UtF-8"))) {
+                        outputFile, StandardCharsets.UTF_8)) {
             convert(inputStream, writer, columns, filters, remappings, separator,
                     trim, join, itemName);
         } catch (final IOException ex) {
@@ -91,7 +93,7 @@ public class Convertor {
             final String[] columns, final Filters filters,
             final Remappings remappings, final char separator,
             final boolean trim, final boolean join, final String itemName) {
-        final XMLInputFactory xMLInputFactory = XMLInputFactory.newInstance();
+        final XMLInputFactory xMLInputFactory = new WstxInputFactory();
         final String itemXPath = itemName;
 
         if (itemName.trim().isEmpty()) {

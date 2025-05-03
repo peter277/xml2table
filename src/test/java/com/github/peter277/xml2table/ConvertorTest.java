@@ -19,9 +19,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.fordfrog.xml2csv;
+package com.github.peter277.xml2table;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -29,23 +30,23 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import org.junit.Assert;
-import org.junit.Test;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 public class ConvertorTest {
 
     String readFile(String path, Charset encoding)
             throws IOException {
-        final byte[] encoded = Files.readAllBytes(Paths.get(this.getClass().
-                getResource(path).getFile()));
-
-        return encoding.decode(ByteBuffer.wrap(encoded)).toString();
+        try (InputStream in = this.getClass().getResourceAsStream(path)) {
+            byte[] encoded = in.readAllBytes();
+            return encoding.decode(ByteBuffer.wrap(encoded)).toString();
+        }
     }
 
     @Test
-    public void testConvertSiple()
+    public void testConvertSimple()
             throws IOException, URISyntaxException {
         final String inputFile = "/input-simple.xml";
         final String outputFile = "/output-simple.csv";
@@ -57,7 +58,10 @@ public class ConvertorTest {
 
         final String expected = readFile(outputFile, StandardCharsets.UTF_8);
 
-        Assert.assertEquals(expected, writer.toString());
+        assertLinesMatch(
+            List.of(expected.split("\\R")),
+            List.of(writer.toString().split("\\R"))
+        );
     }
 
     @Test
@@ -69,7 +73,7 @@ public class ConvertorTest {
                 getBytes()), writer, new String[]{"v"}, null, null, ';', false,
                 false, "/r/i");
 
-        Assert.assertEquals("\"v\"\n\"1\n1\"\n", writer.toString());
+        assertEquals("\"v\"\n\"1\n1\"\n", writer.toString());
     }
 
     @Test
@@ -81,7 +85,7 @@ public class ConvertorTest {
                 "<r><i><v>&lt;p /&gt;\n&lt;p /&gt;</v></i></r>".getBytes()),
                 writer, new String[]{"v"}, null, null, ';', false, false, "/r/i");
 
-        Assert.assertEquals("\"v\"\n\"<p />\n<p />\"\n", writer.toString());
+        assertEquals("\"v\"\n\"<p />\n<p />\"\n", writer.toString());
     }
 
     @Test
@@ -97,7 +101,10 @@ public class ConvertorTest {
 
         final String expected = readFile(outputFile, StandardCharsets.UTF_8);
 
-        Assert.assertEquals(expected, writer.toString());
+        assertLinesMatch(
+            List.of(expected.split("\\R")),
+            List.of(writer.toString().split("\\R"))
+        );
     }
 
     @Test
@@ -113,7 +120,10 @@ public class ConvertorTest {
 
         final String expected = readFile(outputFile, StandardCharsets.UTF_8);
 
-        Assert.assertEquals(expected, writer.toString());
+        assertLinesMatch(
+            List.of(expected.split("\\R")),
+            List.of(writer.toString().split("\\R"))
+        );
     }
 
     @Test
@@ -129,7 +139,10 @@ public class ConvertorTest {
 
         final String expected = readFile(outputFile, StandardCharsets.UTF_8);
 
-        Assert.assertEquals(expected, writer.toString());
+        assertLinesMatch(
+            List.of(expected.split("\\R")),
+            List.of(writer.toString().split("\\R"))
+        );
     }
 
     @Test
@@ -145,7 +158,10 @@ public class ConvertorTest {
 
         final String expected = readFile(outputFile, StandardCharsets.UTF_8);
 
-        Assert.assertEquals(expected, writer.toString());
+        assertLinesMatch(
+            List.of(expected.split("\\R")),
+            List.of(writer.toString().split("\\R"))
+        );
     }
 
     @Test
@@ -162,6 +178,9 @@ public class ConvertorTest {
 
         final String expected = readFile(outputFile, StandardCharsets.UTF_8);
 
-        Assert.assertEquals(expected, writer.toString());
+        assertLinesMatch(
+            List.of(expected.split("\\R")),
+            List.of(writer.toString().split("\\R"))
+        );
     }
 }
