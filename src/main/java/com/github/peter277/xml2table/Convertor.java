@@ -183,6 +183,16 @@ public class Convertor {
                     if ((currentElementPath).compareTo(itemName) == 0) {
                         final Map<String, List<String>> values = new HashMap<>(
                                 columns.length);
+
+                        // Process attributes of the root element
+                        for (int i = 0; i < reader.getAttributeCount(); i++) {
+                            String attributeName = reader.getAttributeLocalName(i);
+                            String attributeValue = reader.getAttributeValue(i);
+                            String attributePath = currentElementPath + "/@" + attributeName;
+                            processValue(attributePath.replaceFirst(Pattern.quote(
+                                itemName + "/"), ""), attributeValue, values);
+                        }
+
                         processItem(reader, writer, columns, filters, remappings,
                                 separator, trim, join, currentElementPath,
                                 values, itemName);
@@ -232,6 +242,16 @@ public class Convertor {
                 case XMLStreamReader.START_ELEMENT:
                     final String currentElementPath = getParentName(
                             parentElement, reader.getLocalName());
+
+                    // Process attributes of the current element
+                    for (int i = 0; i < reader.getAttributeCount(); i++) {
+                        String attributeName = reader.getAttributeLocalName(i);
+                        String attributeValue = reader.getAttributeValue(i);
+                        String attributePath = currentElementPath + "/@" + attributeName;
+                        processValue(attributePath.replaceFirst(Pattern.quote(
+                            itemName + "/"), ""), attributeValue, values);
+                    }
+
                     processItem(reader, writer, columns, filters, remappings,
                             separator, trim, join, currentElementPath, values,
                             itemName);

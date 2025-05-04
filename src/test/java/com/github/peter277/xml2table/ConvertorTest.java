@@ -183,4 +183,23 @@ public class ConvertorTest {
             List.of(writer.toString().split("\\R"))
         );
     }
+    
+    @Test
+    public void testConvertSimpleWithAttributes()
+            throws IOException, URISyntaxException {
+        final String inputFile = "/input-simple-attrib.xml";
+        final String outputFile = "/output-simple-attrib.csv";
+        final Writer writer = new StringWriter();
+
+        Convertor.convert(this.getClass().getResourceAsStream(inputFile),
+                writer, new String[]{"value1", "value2", "value3", "value2/@attrib2_1", "value2/@attrib2_2", "value3/@attrib3"}, null, null,
+                ';', false, false, "/root/item");
+
+        final String expected = readFile(outputFile, StandardCharsets.UTF_8);
+
+        assertLinesMatch(
+            List.of(expected.split("\\R")),
+            List.of(writer.toString().split("\\R"))
+        );
+    }
 }
