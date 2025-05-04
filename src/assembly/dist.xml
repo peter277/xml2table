@@ -34,5 +34,15 @@
             <outputDirectory>/</outputDirectory>
             <fileMode>0755</fileMode>
         </fileSet>
+
+        <!-- Include README and LICENSE HTML files -->
+        <fileSet>
+            <directory>${project.build.directory}/html</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>README.html</include>
+                <include>LICENSE.html</include>
+            </includes>
+        </fileSet>
     </fileSets>
 </assembly>

@@ -25,6 +25,7 @@
         <maven-dependency-plugin.version>3.8.1</maven-dependency-plugin.version>
         <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
         <maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
+        <versions-maven-plugin.version>2.18.0</versions-maven-plugin.version>
     </properties>
 
     <build>
@@ -113,6 +114,24 @@
                 </executions>
             </plugin>
 
+            <!-- Generate HTML files for README and LICENSE -->
+            <plugin>
+                <groupId>com.ruleoftech</groupId>
+                <artifactId>markdown-page-generator-plugin</artifactId>
+                <version>2.4.2</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputDirectory>${project.basedir}</inputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- Assemble distribution -->
             <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
@@ -131,6 +150,26 @@
                 </configuration>
                 </execution>
             </executions>
+            </plugin>
+
+            <!-- Defines version ignore patterns for scripts/mvn-dep-check.sh, affecting both dependency and plugin updates.
+                 These patterns are also passed via the "-Dmaven.version.ignore=" command-line option,
+                 but are included here as a reference and placeholder for potential future project-specific rules. -->
+            <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>versions-maven-plugin</artifactId>
+              <version>${versions-maven-plugin.version}</version>
+              <configuration>
+                <ruleSet>
+                  <ignoreVersions>
+                    <ignoreVersion>
+                      <!-- Ignore any version containing -alpha, -beta, -rc or -M qualifiers -->
+                      <type>regex</type>
+                      <version>(?i).*[-_\.](alpha|beta|rc|M\d).*</version>
+                    </ignoreVersion>
+                  </ignoreVersions>
+                </ruleSet>
+              </configuration>
             </plugin>
 
         </plugins>

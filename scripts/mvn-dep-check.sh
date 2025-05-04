@@ -8,7 +8,7 @@
 ####################################################################################################
 
 # Library dependency updates
-mvn org.codehaus.mojo:versions-maven-plugin:display-dependency-updates "-Dmaven.version.ignore=.*-M.*,.*-alpha.*,.*-beta.*,.*-rc.*"
+mvn org.codehaus.mojo:versions-maven-plugin:display-dependency-updates "-Dmaven.version.ignore=(?i).*[-_\.](alpha|beta|rc|M\d).*"
 
 # Plugin updates
-mvn org.codehaus.mojo:versions-maven-plugin:display-plugin-updates
+mvn org.codehaus.mojo:versions-maven-plugin:display-plugin-updates "-Dmaven.version.ignore=(?i).*[-_\.](alpha|beta|rc|M\d).*"
