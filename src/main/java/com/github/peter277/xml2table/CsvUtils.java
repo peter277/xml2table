@@ -113,7 +113,7 @@ public class CsvUtils {
     }
 
     /**
-     * Unescapes specified quote character. Bot double quote and backslash
+     * Unescapes specified quote character. Both double quote and backslash
      * escapes are supported.
      *
      * @param string    string

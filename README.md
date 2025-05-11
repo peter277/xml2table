@@ -1,6 +1,6 @@
 # xml2table
 
-Simple XML to flat file (e.g. CSV, TSV) conversion utility.
+Simple XML to flat file (e.g. CSV, TSV) conversion utility, modified and extended from [xml2csv](https://github.com/fordfrog/xml2csv) project.
 
 ## What it does exactly?
 
@@ -45,63 +45,94 @@ located.
 
 Here is the usage information that xml2table outputs if run without parameters:
 
-    Usage: xml2table --columns <columns> --input <file> --output <file> --item-name <xpath>
+    Usage: xml2table [-hV] ([--parallel[=<threads>]] (--input-file=<file>...
+                     [--input-file=<file>...]... | --input-dir=<dir>)
+                     (--output-file=<file> | --output-dir=<dir>))
+                     (--row-item-name=<XPath> --columns=<child XPath>[,<child
+                     XPath>...] [--columns=<child XPath>[,<child XPath>...]]...
+                     [--separator=<string>] [--no-quote] [--no-header] [--trim]
+                     [--join-values] [--join-separator=<string>])
+                     [--filter-column=<name> --filter-values=<file>
+                     [--filter-exclude]]... [--remap-column=<name>
+                     --remap-map=<file>]...
 
-    General command line switches:
+    Convert XML to flat files. The application reads and writes files using UTF-8
+    encoding.
 
-    --columns <columns>
-        List of columns that should be output to the CSV file. These names must
-        correspond to the element names within the item element.
-    --input <file>
-        Path to the input XML file.
-    --item-name
-        XPath which refers to XML element which will be converted to a row. It cannot
-        end with slash (/).
-    --join
-        Join values of multiple elements into single value using (, ) as a separator.
-        By default value of the first element is saved to CSV.
-    --output <file>
-        Path to the output CSV file. Output file content is always in UTF-8 encoding.
-    --separator <character>
-        Character that should be used to separate fields. Default value is (;).
-    --trim
-        Trim values. By default values are not trimmed.
+      -h, --help                 Show this help message and exit.
+      -V, --version              Print version information and exit.
 
-    Filtering rows:
+    File processing options:
 
-    --filter-column <name>
-        Column on which the filter should be applied. When specifying filter command
-        line switches, you must use this switch as the first one as it initializes
-        new filter. You can specify more filters, each one beginning with this
-        switch. You can filter the rows even on columns that are not part of the
-        output. Filtering is performed before remapping.
-    ..filter.values <file>
-        Path to file containing values that the filter should use. Empty rows are
-        added to the values too.
-    --filter-exclude
-        Excludes all rows where the column value matches one of the specified values.
-    --filter-include
-        Includes all rows where the column value matches one of the specified values.
-        This is the default behavior if --filter-exclude|--filter-include is not
-        specified.
+      --parallel[=<threads>] Enable parallel execution.
+                             Optionally specify number of threads to run in
+                               parallel (max: lesser of available processors
+                               and number of input files). If used without a
+                               value, uses max threads. If omitted, runs
+                               single-threaded.
+      --input-file=<file>... Path to the input XML file(s).
+      --input-dir=<dir>      Path to input directory containing XML files.
+                               Mutually exclusive with --input-file option.
+      --output-file=<file>   Path to the output file.
+      --output-dir=<dir>     Path to output directory. Will be created if it
+                               does not exist. Output file name will be the
+                               same as input file name with the extension
+                               replaced by .txt. Mutually exclusive with
+                               --output-file option.
 
-    Remapping (replacing) values:
+    General options:
 
-    --remap-column <name>
-        Column in which original values should be replaced with values from map
-        file. When specifying remapping command line switches, you must use this
-        switch as the first one as it initializes new remapping. You can specify
-        more remappings, each one beginning with this switch. Remapping is performed
-        after filtering.
-    --remap-map <file>
-        Path to file containing original value and new value pairs. The file uses
-        CSV format. Values can be escaped either using single-quote (') or
-        double-quote ("). Quotes within values can be escaped either doubling them
-        ("" and '') or backslash-escaping them (\" and \').
+      --row-item-name=<XPath>
+                             Parent XPath referring to the XML element that
+                               will be traversed using child XPath
+                               specifications from --columns and converted into
+                               a row. It cannot end with a slash (/).
+      --columns=<child XPath>[,<child XPath>...]
+                             List of columns that should be output to the flat
+                               file. Columns are specified as child XPath
+                               expressions relative to --row-item-name.
+      --separator=<string>   String that should be used to separate output
+                               columns.
+                               Default: ,
+      --no-quote             Do not quote values in flat file output. By
+                               default all values are quoted.
+      --no-header            Do not output header line with column names. By
+                               default header line is output.
+      --trim                 Trim leading and trailing whitespace from output
+                               values. By default values are not trimmed.
+      --join-values          Join multiple values matched by a child XPath for
+                               a column into a single string using a separator
+                               (default: ||). By default, the first matched
+                               value for the column is selected and stored.
+      --join-separator=<string>
+                             Separator used to join multiple values matched by
+                               a child XPath for a column when the
+                               --join-values option is enabled.
+                               Default: ||
 
-Characters encoding:
+    Filtering options:
 
-    Application expects all files being in UTF-8 encoding.
+      --filter-column=<name> Name of the column to filter on. You can specify
+                               multiple filters by using this option group
+                               multiple times.
+      --filter-values=<file> Path to file containing values that the filter
+                               should use. Empty rows are added to the values
+                               too.
+      --filter-exclude       Invert filter to exclude matching rows instead of
+                               the default of including them.
+
+    Remapping (value replacement) options:
+
+      --remap-column=<name>  Name of the column to remap. You can specify
+                               multiple remap rules by using this option group
+                               multiple times. Remapping is done after
+                               filtering.
+      --remap-map=<file>     Path to file containing original value and new
+                               value pairs. The file uses CSV format. Values
+                               can be escaped either using single-quote (') or
+                               double-quote ("). Quotes within values can be
+                               escaped by either doubling them ("" and '') or
+                               backslash-escaping them (\" and \').
 
 ## License and Acknowledgements
 

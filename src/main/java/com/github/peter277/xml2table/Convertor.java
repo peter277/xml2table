@@ -29,25 +29,78 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.AbstractMap;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 /**
- * XML to CSV convertor.
+ * XML to flat file convertor.
  *
- * @author fordfrog
+ * @author fordfrog (original author)
  */
 public class Convertor {
+    // IO Resources
+    InputStream inputStream = null;
+    Writer writer = null;
+
+    XMLInputFactory xMLInputFactory = null;
+    XMLStreamReader reader = null;
+
+    // Settings
+    String[] columns = null;
+    Filters filters = null;
+    Remappings remappings = null;
+    String separator = ",";
+    boolean trim = false;
+    boolean join = false;
+    String rootItemName = null;
+    String joinSeparator = "||";
+    boolean quoteValues = true;
+    boolean noHeader = false;
+
+
+    public static Convertor newConvertorFromFiles(final Path infile, final Path outfile, final ConvertorSettings settings)
+        throws IOException {        
+        Convertor newObj = new Convertor(
+            infile, outfile,
+            settings.generalOptions.columns, settings.filters, settings.remappings, settings.generalOptions.separator,
+            settings.generalOptions.trimValues, settings.generalOptions.join, settings.generalOptions.itemName
+        );
+
+        newObj.joinSeparator = settings.generalOptions.joinSeparator;
+        newObj.quoteValues = !settings.generalOptions.noQuote;
+        newObj.noHeader = settings.generalOptions.noHeader;
+
+        return newObj;
+    }
+
+    public static Convertor newConvertorFromStreams(final InputStream inputStream, final Writer writer, final ConvertorSettings settings)
+        throws IOException {        
+        Convertor newObj = new Convertor(
+            inputStream, writer,
+            settings.generalOptions.columns, settings.filters, settings.remappings, settings.generalOptions.separator,
+            settings.generalOptions.trimValues, settings.generalOptions.join, settings.generalOptions.itemName
+        );
+
+        newObj.joinSeparator = settings.generalOptions.joinSeparator;
+        newObj.quoteValues = !settings.generalOptions.noQuote;
+        newObj.noHeader = settings.generalOptions.noHeader;
+
+        return newObj;
+    }
 
     /**
-     * Converts input XML file to output CSV file.
+     * Constructs object to convert input XML file to output flat file (e.g. CSV, TSV). Deprecated - will be refactored in future.
      *
      * @param inputFile  input file path
      * @param outputFile output file path
@@ -60,22 +113,21 @@ public class Convertor {
      * @param itemName   XPath which refers to XML element which will be
      *                   converted to a row
      */
-    public static void convert(final Path inputFile, final Path outputFile,
+    private Convertor(final Path inputFile, final Path outputFile,
             final String[] columns, final Filters filters,
-            final Remappings remappings, final char separator,
-            final boolean trim, final boolean join, final String itemName) {
-        try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(inputFile));
-                final Writer writer = Files.newBufferedWriter(
-                        outputFile, StandardCharsets.UTF_8)) {
-            convert(inputStream, writer, columns, filters, remappings, separator,
-                    trim, join, itemName);
-        } catch (final IOException ex) {
-            throw new RuntimeException("IO operation failed", ex);
-        }
+            final Remappings remappings, final String separator,
+            final boolean trim, final boolean join, final String itemName)
+            throws IOException {
+                this(
+                    new BufferedInputStream(Files.newInputStream(inputFile)),
+                    Files.newBufferedWriter(outputFile, StandardCharsets.UTF_8),
+                    columns, filters, remappings, separator,
+                    trim, join, itemName
+                );
     }
 
     /**
-     * Converts input stream with XML to CSV saved into writer.
+     * Constructs object to convert input stream with XML to flat file saved into writer. Deprecated - will be refactored in future.
      *
      * @param inputStream input stream
      * @param writer      writer
@@ -88,37 +140,60 @@ public class Convertor {
      * @param itemName    XPath which refers to XML element which will be
      *                    converted to a row
      */
-    public static void convert(final InputStream inputStream,
+    private Convertor(final InputStream inputStream,
             final Writer writer,
             final String[] columns, final Filters filters,
-            final Remappings remappings, final char separator,
-            final boolean trim, final boolean join, final String itemName) {
-        final XMLInputFactory xMLInputFactory = new WstxInputFactory();
-        final String itemXPath = itemName;
+            final Remappings remappings, final String separator,
+            final boolean trim, final boolean join, final String itemName)
+            throws RuntimeException, IOException
+        {
+            this.inputStream = inputStream;
+            this.writer = writer;
+            this.columns = columns;
+            this.filters = filters;
+            this.remappings = remappings;
+            this.separator = separator;
+            this.trim = trim;
+            this.join = join;
+            this.rootItemName = itemName;
 
-        if (itemName.trim().isEmpty()) {
-            throw new IllegalArgumentException("itemName is an empty string. ");
+            if (itemName.trim().isEmpty()) {
+                throw new IllegalArgumentException("itemName is an empty string. ");
+            }
+    
+            if (itemName.trim().length() != 1 && itemName.endsWith("/")) {
+                throw new IllegalArgumentException(
+                        "itemName cannot end with a shash (/).");
+            }
+
+            try {
+                this.xMLInputFactory = new WstxInputFactory();
+                this.reader = xMLInputFactory.createXMLStreamReader(this.inputStream);
+            } catch (final XMLStreamException ex) {
+                throw new RuntimeException("XML stream exception: unable to create stream reader", ex);
+            }
         }
 
-        if (itemName.trim().length() != 1 && itemName.endsWith("/")) {
-            throw new IllegalArgumentException(
-                    "itemName cannot end with a shash (/).");
-        }
-
+    /**
+     * Converts XML to flat file using settings specified during object construction.
+     *
+     * @throws RuntimeException Thrown if IO or XML stream exception occurred.
+     */
+    public void convert() {        
         try {
-            final XMLStreamReader reader = xMLInputFactory.
-                    createXMLStreamReader(inputStream);
-
-            writeHeader(writer, columns, separator);
+            if (!this.noHeader) {
+                writeHeader();
+            }
 
             while (reader.hasNext()) {
                 switch (reader.next()) {
                     case XMLStreamReader.START_ELEMENT:
-                        processRoot(reader, writer, columns, filters, remappings,
-                                separator, trim, join, getParentName(null,
-                                        reader.getLocalName()), itemXPath);
+                        processRoot(getParentName(null,reader.getLocalName()));
                 }
             }
+
+            writer.close();
+            reader.close();
         } catch (final IOException ex) {
             throw new RuntimeException("IO operation failed", ex);
         } catch (final XMLStreamException ex) {
@@ -127,84 +202,55 @@ public class Convertor {
     }
 
     /**
-     * Writes CVS header.
-     *
-     * @param writer    writer
-     * @param columns   array of columns
-     * @param separator field separator
+     * Writes header for delimited flat file.
      *
      * @throws IOException Thrown if problem occurred while writing to output
      *                     file.
      */
-    private static void writeHeader(final Writer writer, final String[] columns,
-            final char separator) throws IOException {
-        for (int i = 0; i < columns.length; i++) {
+    private void writeHeader() throws IOException {
+        for (int i = 0; i < this.columns.length; i++) {
             if (i > 0) {
-                writer.append(separator);
+                writer.append(this.separator);
             }
 
-            writer.append(CsvUtils.quoteString(columns[i]));
+            writer.append(this.quoteValues ? CsvUtils.quoteString(this.columns[i]) : Objects.requireNonNullElse(this.columns[i],""));
         }
 
         writer.append('\n');
+
+        writer.flush();
     }
 
     /**
      * Processes root element and its subelements.
      *
-     * @param reader        XML stream reader
-     * @param writer        CSV file writer
-     * @param columns       array of columns
-     * @param filters       optional filters
-     * @param remappings    optional remappings
-     * @param separator     field separator
-     * @param trim          whether to trim values or not
-     * @param join          whether to join multiple values or not
      * @param parentElement XPath which refers to parent element
-     * @param itemName      XPath which refers to XML element which will be
-     *                      converted to a row
      *
      * @throws XMLStreamException Thrown if problem occurred while reading XML
      *                            stream.
      * @throws IOException        Thrown if IO problem occurred.
      */
-    private static void processRoot(final XMLStreamReader reader,
-            final Writer writer, final String[] columns, final Filters filters,
-            final Remappings remappings, final char separator,
-            final boolean trim, final boolean join, final String parentElement,
-            final String itemName) throws XMLStreamException,
+    private void processRoot(final String parentElement) throws XMLStreamException,
             IOException {
-        while (reader.hasNext()) {
+        final Deque<String> stack = new ArrayDeque<>();
+        stack.push(parentElement);
+
+        while (!stack.isEmpty() && reader.hasNext()) {
             switch (reader.next()) {
                 case XMLStreamReader.START_ELEMENT:
                     final String currentElementPath = getParentName(
-                            parentElement, reader.getLocalName());
+                            stack.peek(), reader.getLocalName());
 
-                    if ((currentElementPath).compareTo(itemName) == 0) {
-                        final Map<String, List<String>> values = new HashMap<>(
-                                columns.length);
-
-                        // Process attributes of the root element
-                        for (int i = 0; i < reader.getAttributeCount(); i++) {
-                            String attributeName = reader.getAttributeLocalName(i);
-                            String attributeValue = reader.getAttributeValue(i);
-                            String attributePath = currentElementPath + "/@" + attributeName;
-                            processValue(attributePath.replaceFirst(Pattern.quote(
-                                itemName + "/"), ""), attributeValue, values);
-                        }
-
-                        processItem(reader, writer, columns, filters, remappings,
-                                separator, trim, join, currentElementPath,
-                                values, itemName);
+                    if ((currentElementPath).compareTo(rootItemName) == 0) {
+                        processItem(currentElementPath);
                     } else {
-                        processRoot(reader, writer, columns, filters, remappings,
-                                separator, trim, join, currentElementPath,
-                                itemName);
+                        stack.push(currentElementPath);
                     }
 
                     break;
                 case XMLStreamReader.END_ELEMENT:
-                    return;
+                    stack.pop();
+                    break;
             }
         }
     }
@@ -212,36 +258,35 @@ public class Convertor {
     /**
      * Processes item element.
      *
-     * @param reader        XML stream reader
-     * @param writer        CSV file writer
-     * @param columns       array of columns
-     * @param filters       optional filters
-     * @param remappings    optional remappings
-     * @param separator     field separator
-     * @param trim          whether to trim values or not
-     * @param join          whether to join multiple values or not
      * @param parentElement XPath which refers to parent element
      * @param values        values of XML element for current row
-     * @param itemName      element name which will be converted to row
      *
      * @throws XMLStreamException Thrown if problem occurred while reading XML
      *                            stream.
      * @throws IOException        Thrown if IO problem occurred.
      */
-    private static void processItem(final XMLStreamReader reader,
-            final Writer writer, final String[] columns, final Filters filters,
-            final Remappings remappings, final char separator,
-            final boolean trim, final boolean join, final String parentElement,
-            final Map<String, List<String>> values, final String itemName)
-            throws XMLStreamException,
-            IOException {
-        final StringBuilder sb = new StringBuilder(1_024);
+    private void processItem(final String parentElement)
+        throws XMLStreamException, IOException {
+        
+        final Map<String, List<String>> values = new HashMap<>(columns.length);
 
-        while (reader.hasNext()) {
+        // Process attributes of the root element
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String attributeName = reader.getAttributeLocalName(i);
+            String attributeValue = reader.getAttributeValue(i);
+            String attributePath = parentElement + "/@" + attributeName;
+            processValue(attributePath.replaceFirst(Pattern.quote(
+                rootItemName + "/"), ""), attributeValue, values);
+        }
+
+        final Deque<Entry<String, StringBuilder>> stack = new ArrayDeque<>(); // Use Entry as substitute for Pair
+        stack.push(new AbstractMap.SimpleEntry<>(parentElement, null));
+
+        while (!stack.isEmpty() && reader.hasNext()) {
             switch (reader.next()) {
                 case XMLStreamReader.START_ELEMENT:
                     final String currentElementPath = getParentName(
-                            parentElement, reader.getLocalName());
+                        stack.peek().getKey(), reader.getLocalName());
 
                     // Process attributes of the current element
                     for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -249,27 +294,29 @@ public class Convertor {
                         String attributeValue = reader.getAttributeValue(i);
                         String attributePath = currentElementPath + "/@" + attributeName;
                         processValue(attributePath.replaceFirst(Pattern.quote(
-                            itemName + "/"), ""), attributeValue, values);
+                            rootItemName + "/"), ""), attributeValue, values);
                     }
 
-                    processItem(reader, writer, columns, filters, remappings,
-                            separator, trim, join, currentElementPath, values,
-                            itemName);
+                    // Process any child elements
+                    stack.push(new AbstractMap.SimpleEntry<>(currentElementPath, null));
 
                     break;
                 case XMLStreamReader.CHARACTERS:
-                    sb.append(reader.getText());
+                    if (stack.peek().getValue() == null) {
+                        stack.peek().setValue(new StringBuilder(100));
+                    }
+                    stack.peek().getValue().append(reader.getText());
 
                     break;
                 case XMLStreamReader.END_ELEMENT:
-                    if ((parentElement).compareTo(itemName) == 0) {
+                    // If we have reached the closing tag of the root item, concatenate or truncate multiple values (depending on join setting),
+                    // apply any filter conditions, and write out the values as a row
+                    if ((stack.peek().getKey()).compareTo(rootItemName) == 0) {
                         final Map<String, String> singleValues = new HashMap<>(
                                 columns.length);
 
-                        for (Entry<String, List<String>> mapEntry : values.
-                                entrySet()) {
-                            singleValues.put(mapEntry.getKey(), prepareValue(
-                                    mapEntry.getValue(), ", ", trim, join));
+                        for (Entry<String, List<String>> mapEntry : values.entrySet()) {
+                            singleValues.put(mapEntry.getKey(), prepareValue(mapEntry.getValue()));
                         }
 
                         if (filters == null || filters.matchesFilters(
@@ -278,56 +325,54 @@ public class Convertor {
                                 remappings.replaceValues(singleValues);
                             }
 
-                            writeRow(writer, columns, singleValues, separator);
+                            writeRow(singleValues);
                         }
                     } else {
-                        processValue(parentElement.replaceFirst(Pattern.quote(
-                                itemName + "/"), ""), sb.toString(), values);
+                        StringBuilder sb =  stack.peek().getValue();
+                        processValue(stack.peek().getKey().replaceFirst(Pattern.quote(
+                                rootItemName + "/"), ""), sb == null ? "" : sb.toString(), values);
                     }
-                    return;
+
+                    stack.pop();
+                    break;
             }
         }
     }
 
     /**
-     * Writes XML item to CSV as CSV row.
+     * Writes XML item to flat file as delimited row of columns.
      *
-     * @param writer    CSV file writer
-     * @param columns   array of columns
      * @param values    map of values
-     * @param separator field separator
      *
      * @throws IOException Thrown if problem occurred while writing to output
      *                     file.
      */
-    private static void writeRow(final Writer writer, final String[] columns,
-            final Map<String, String> values, final char separator)
+    private void writeRow(final Map<String, String> values)
             throws IOException {
+        final StringBuilder sb = new StringBuilder(columns.length * 20); // Pre-allocate size
+
         for (int i = 0; i < columns.length; i++) {
             if (i > 0) {
-                writer.append(separator);
+                sb.append(this.separator);
             }
 
-            writer.append(CsvUtils.quoteString(values.get(columns[i])));
+            sb.append(this.quoteValues ? CsvUtils.quoteString(values.get(columns[i])) : Objects.requireNonNullElse(values.get(columns[i]),""));
         }
 
-        writer.append('\n');
+        writer.append(sb.toString()).append('\n');
+        writer.flush();
     }
 
     /**
-     * Joins elements from the list using given separator or return first
+     * Joins elements from the list using configured join separator or return first
      * element from the list. Use trim=<code>true</code> to trim values.
      *
      * @param values         list of values
-     * @param valueSeparator string used to separate values
-     * @param trim           whether to trim values or not
-     * @param join           whether to join multiple values or not
      *
      * @return String containing separated values from the list or first element
      *         from the list.
      */
-    private static String prepareValue(List<String> values,
-            final String valueSeparator, final boolean trim, final boolean join) {
+    private String prepareValue(List<String> values) {
         if (values.isEmpty()) {
             return null;
         }
@@ -335,19 +380,16 @@ public class Convertor {
             final StringBuilder sb = new StringBuilder(1_024);
 
             for (int i = 0; i < values.size(); i++) {
-                final String value = trim ? values.get(i).trim() : values.get(i);
-
-                sb.append(value);
-
-                if (i < values.size() - 1) {
-                    sb.append(valueSeparator);
+                final String processedValue = trim ? values.get(i).trim() : values.get(i);
+                sb.append(processedValue);
+                if (i < values.size() - 1) { // Append separator only if not the last element
+                    sb.append(joinSeparator);
                 }
             }
 
             return sb.toString();
         } else {
             final String value = values.get(0);
-
             return trim ? value.trim() : value;
         }
     }
@@ -360,31 +402,26 @@ public class Convertor {
      *
      * @return path to the current element
      */
-    private static String getParentName(final String parentName,
-            final String currentElement) {
-        return (parentName == null ? "" : parentName) + "/" + currentElement;
+    private static String getParentName(final String parentName, final String currentElement) {
+        final StringBuilder sb = new StringBuilder();
+        if (parentName != null) {
+            sb.append(parentName);
+        }
+        sb.append("/").append(currentElement);
+        return sb.toString();
     }
 
     /**
-     * Adds a single value of XML item. Only columns contains in array are
+     * Adds a single value of XML item. Only columns contained in array are
      * added to the values map.
      *
      * @param elementName name of XML element
      * @param value       value to be added
      * @param values      map for storing values
      */
-    private static void processValue(String elementName, String value,
-            Map<String, List<String>> values) {
-        if (!values.containsKey(elementName)) {
-            values.put(elementName, new ArrayList<String>(10));
-        }
-
-        values.get(elementName).add(value);
-    }
-
-    /**
-     * Creates new instance of Convertor.
-     */
-    private Convertor() {
+    private void processValue(String elementName, String value, Map<String, List<String>> values) {
+        List<String> elementValues = values.computeIfAbsent(elementName, k -> new ArrayList<String>(10));
+        
+        elementValues.add(value);
     }
 }

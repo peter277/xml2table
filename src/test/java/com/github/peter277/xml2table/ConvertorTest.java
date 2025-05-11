@@ -52,9 +52,15 @@ public class ConvertorTest {
         final String outputFile = "/output-simple.csv";
         final Writer writer = new StringWriter();
 
-        Convertor.convert(this.getClass().getResourceAsStream(inputFile),
-                writer, new String[]{"value1", "value2", "value3"}, null, null,
-                ';', false, false, "/root/item");
+        ConvertorSettings convertorSettings = new ConvertorSettings();
+        convertorSettings.generalOptions.columns = new String[]{"value1", "value2", "value3"};
+        convertorSettings.generalOptions.itemName = "/root/item";
+        convertorSettings.generalOptions.separator = ";";
+        convertorSettings.generalOptions.trimValues = false;
+        convertorSettings.generalOptions.join = false;
+
+        Convertor convertor = Convertor.newConvertorFromStreams(this.getClass().getResourceAsStream(inputFile), writer, convertorSettings);
+        convertor.convert();
 
         final String expected = readFile(outputFile, StandardCharsets.UTF_8);
 
@@ -69,9 +75,15 @@ public class ConvertorTest {
             throws IOException, URISyntaxException {
         final Writer writer = new StringWriter();
 
-        Convertor.convert(new ByteArrayInputStream("<r><i><v>1\n1</v></i></r>".
-                getBytes()), writer, new String[]{"v"}, null, null, ';', false,
-                false, "/r/i");
+        ConvertorSettings convertorSettings = new ConvertorSettings();
+        convertorSettings.generalOptions.columns = new String[]{"v"};
+        convertorSettings.generalOptions.itemName = "/r/i";
+        convertorSettings.generalOptions.separator = ";";
+        convertorSettings.generalOptions.trimValues = false;
+        convertorSettings.generalOptions.join = false;
+
+        Convertor convertor = Convertor.newConvertorFromStreams(new ByteArrayInputStream("<r><i><v>1\n1</v></i></r>".getBytes()), writer, convertorSettings);
+        convertor.convert();
 
         assertEquals("\"v\"\n\"1\n1\"\n", writer.toString());
     }
@@ -81,9 +93,15 @@ public class ConvertorTest {
             throws IOException, URISyntaxException {
         final Writer writer = new StringWriter();
 
-        Convertor.convert(new ByteArrayInputStream(
-                "<r><i><v>&lt;p /&gt;\n&lt;p /&gt;</v></i></r>".getBytes()),
-                writer, new String[]{"v"}, null, null, ';', false, false, "/r/i");
+        ConvertorSettings convertorSettings = new ConvertorSettings();
+        convertorSettings.generalOptions.columns = new String[]{"v"};
+        convertorSettings.generalOptions.itemName = "/r/i";
+        convertorSettings.generalOptions.separator = ";";
+        convertorSettings.generalOptions.trimValues = false;
+        convertorSettings.generalOptions.join = false;
+
+        Convertor convertor = Convertor.newConvertorFromStreams(new ByteArrayInputStream("<r><i><v>&lt;p /&gt;\n&lt;p /&gt;</v></i></r>".getBytes()), writer, convertorSettings);
+        convertor.convert();
 
         assertEquals("\"v\"\n\"<p />\n<p />\"\n", writer.toString());
     }
@@ -95,9 +113,15 @@ public class ConvertorTest {
         final String outputFile = "/output-trim.csv";
         final Writer writer = new StringWriter();
 
-        Convertor.convert(this.getClass().getResourceAsStream(inputFile),
-                writer, new String[]{"value1", "value2", "value3"}, null, null,
-                ';', true, false, "/root/item");
+        ConvertorSettings convertorSettings = new ConvertorSettings();
+        convertorSettings.generalOptions.columns = new String[]{"value1", "value2", "value3"};
+        convertorSettings.generalOptions.itemName = "/root/item";
+        convertorSettings.generalOptions.separator = ";";
+        convertorSettings.generalOptions.trimValues = true;
+        convertorSettings.generalOptions.join = false;
+        
+        Convertor convertor = Convertor.newConvertorFromStreams(this.getClass().getResourceAsStream(inputFile), writer, convertorSettings);
+        convertor.convert();
 
         final String expected = readFile(outputFile, StandardCharsets.UTF_8);
 
@@ -114,9 +138,15 @@ public class ConvertorTest {
         final String outputFile = "/output-multiple-select-first.csv";
         final Writer writer = new StringWriter();
 
-        Convertor.convert(this.getClass().getResourceAsStream(inputFile),
-                writer, new String[]{"value1", "value2", "value3"}, null, null,
-                ',', false, false, "/root/item");
+        ConvertorSettings convertorSettings = new ConvertorSettings();
+        convertorSettings.generalOptions.columns = new String[]{"value1", "value2", "value3"};
+        convertorSettings.generalOptions.itemName = "/root/item";
+        convertorSettings.generalOptions.separator = ",";
+        convertorSettings.generalOptions.trimValues = false;
+        convertorSettings.generalOptions.join = false;
+
+        Convertor convertor = Convertor.newConvertorFromStreams(this.getClass().getResourceAsStream(inputFile), writer, convertorSettings);
+        convertor.convert();
 
         final String expected = readFile(outputFile, StandardCharsets.UTF_8);
 
@@ -131,11 +161,17 @@ public class ConvertorTest {
             throws IOException, URISyntaxException {
         final String inputFile = "/input-multiple.xml";
         final String outputFile = "/output-multiple-join.csv";
+        
+        InputStream inputStream = this.getClass().getResourceAsStream(inputFile);
         final Writer writer = new StringWriter();
 
-        Convertor.convert(this.getClass().getResourceAsStream(inputFile),
-                writer, new String[]{"value1", "value2", "value3"}, null, null,
-                ',', false, true, "/root/item");
+        ConvertorSettings convertorSettings = new ConvertorSettings();
+        convertorSettings.generalOptions.columns = new String[]{"value1", "value2", "value3"};
+        convertorSettings.generalOptions.itemName = "/root/item";
+        convertorSettings.generalOptions.join = true;
+        convertorSettings.generalOptions.joinSeparator = ", ";
+
+        Convertor.newConvertorFromStreams(inputStream,writer,convertorSettings).convert();
 
         final String expected = readFile(outputFile, StandardCharsets.UTF_8);
 
@@ -152,9 +188,15 @@ public class ConvertorTest {
         final String outputFile = "/output-deep.csv";
         final Writer writer = new StringWriter();
 
-        Convertor.convert(this.getClass().getResourceAsStream(inputFile),
-                writer, new String[]{"value1", "value2", "value3"}, null, null,
-                ';', false, false, "/root/item0/item1/item2");
+        ConvertorSettings convertorSettings = new ConvertorSettings();
+        convertorSettings.generalOptions.columns = new String[]{"value1", "value2", "value3"};
+        convertorSettings.generalOptions.itemName = "/root/item0/item1/item2";
+        convertorSettings.generalOptions.separator = ";";
+        convertorSettings.generalOptions.trimValues = false;
+        convertorSettings.generalOptions.join = false;
+
+        Convertor convertor = Convertor.newConvertorFromStreams(this.getClass().getResourceAsStream(inputFile), writer, convertorSettings);
+        convertor.convert();
 
         final String expected = readFile(outputFile, StandardCharsets.UTF_8);
 
@@ -171,10 +213,15 @@ public class ConvertorTest {
         final String outputFile = "/output-hierarchy.csv";
         final Writer writer = new StringWriter();
 
-        Convertor.convert(this.getClass().getResourceAsStream(inputFile),
-                writer, new String[]{"header/value1", "body/value3",
-                    "body/value4/value41", "body/value4/value42"}, null, null,
-                ',', false, false, "/root/item");
+        ConvertorSettings convertorSettings = new ConvertorSettings();
+        convertorSettings.generalOptions.columns = new String[]{"header/value1", "body/value3", "body/value4/value41", "body/value4/value42"};
+        convertorSettings.generalOptions.itemName = "/root/item";
+        convertorSettings.generalOptions.separator = ",";
+        convertorSettings.generalOptions.trimValues = false;
+        convertorSettings.generalOptions.join = false;
+
+        Convertor convertor = Convertor.newConvertorFromStreams(this.getClass().getResourceAsStream(inputFile), writer, convertorSettings);
+        convertor.convert();
 
         final String expected = readFile(outputFile, StandardCharsets.UTF_8);
 
@@ -191,9 +238,15 @@ public class ConvertorTest {
         final String outputFile = "/output-simple-attrib.csv";
         final Writer writer = new StringWriter();
 
-        Convertor.convert(this.getClass().getResourceAsStream(inputFile),
-                writer, new String[]{"value1", "value2", "value3", "value2/@attrib2_1", "value2/@attrib2_2", "value3/@attrib3"}, null, null,
-                ';', false, false, "/root/item");
+        ConvertorSettings convertorSettings = new ConvertorSettings();
+        convertorSettings.generalOptions.columns = new String[]{"value1", "value2", "value3", "value2/@attrib2_1", "value2/@attrib2_2", "value3/@attrib3"};
+        convertorSettings.generalOptions.itemName = "/root/item";
+        convertorSettings.generalOptions.separator = ";";
+        convertorSettings.generalOptions.trimValues = false;
+        convertorSettings.generalOptions.join = false;
+
+        Convertor convertor = Convertor.newConvertorFromStreams(this.getClass().getResourceAsStream(inputFile), writer, convertorSettings);
+        convertor.convert();
 
         final String expected = readFile(outputFile, StandardCharsets.UTF_8);
 
